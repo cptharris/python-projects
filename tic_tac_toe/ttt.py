@@ -14,43 +14,59 @@ import re
 import computer
 import datetime
 import sqlite3
+import random
 
 blankFill = "-"
 
 class tttBoard:
 	def __init__(self):
+		# create the blank board
 		self.b = np.empty(shape=(3,3), dtype='object')
 		for r in range(3):
 			for c in range(3):
 				self.b[r][c] = blankFill
 
-	def draw(self):
+	def draw(self, stats):
 		os.system("cls")
 		spaces = "   "
 		dashes = "-" + spaces.replace(" ", "--")
+		
+		# board list representing each line
+		boardList = [
+		"\t" + " " + spaces + "0" + spaces + ' ' + spaces + "1" + spaces + ' ' + spaces + "2" + spaces,
+		"\t" + " " + spaces + " " + spaces + '|' + spaces + " " + spaces + '|' + spaces + " " + spaces,
+		"\t" + "0" + spaces + self.b[0][0] + spaces + '|' + spaces + self.b[0][1] + spaces + '|' + spaces + self.b[0][2] + spaces,
+		"\t" + " " + spaces + " " + spaces + '|' + spaces + " " + spaces + '|' + spaces + " " + spaces,
+		"\t" + " " + dashes + "|" + dashes + "|" + dashes,
+		"\t" + " " + spaces + " " + spaces + '|' + spaces + " " + spaces + '|' + spaces + " " + spaces,
+		"\t" + "1" + spaces + self.b[1][0] + spaces + '|' + spaces + self.b[1][1] + spaces + '|' + spaces + self.b[1][2] + spaces,
+		"\t" + " " + spaces + " " + spaces + '|' + spaces + " " + spaces + '|' + spaces + " " + spaces,
+		"\t" + " " + dashes + "|" + dashes + "|" + dashes,
+		"\t" + " " + spaces + " " + spaces + '|' + spaces + " " + spaces + '|' + spaces + " " + spaces,
+		"\t" + "2" + spaces + self.b[2][0] + spaces + '|' + spaces + self.b[2][1] + spaces + '|' + spaces + self.b[2][2] + spaces,
+		"\t" + " " + spaces + " " + spaces + '|' + spaces + " " + spaces + '|' + spaces + " " + spaces
+		]
+		
 		print("\n\n")
-		print("\t" + " " + spaces + "0" + spaces + ' ' + spaces + "1" + spaces + ' ' + spaces + "2" + spaces)
-		print("\t" + " " + spaces + " " + spaces + '|' + spaces + " " + spaces + '|' + spaces + " " + spaces)
-		print("\t" + "0" + spaces + self.b[0][0] + spaces + '|' + spaces + self.b[0][1] + spaces + '|' + spaces + self.b[0][2] + spaces)
-		print("\t" + " " + spaces + " " + spaces + '|' + spaces + " " + spaces + '|' + spaces + " " + spaces)
-		print("\t" + " " + dashes + "|" + dashes + "|" + dashes)
-		print("\t" + " " + spaces + " " + spaces + '|' + spaces + " " + spaces + '|' + spaces + " " + spaces)
-		print("\t" + "1" + spaces + self.b[1][0] + spaces + '|' + spaces + self.b[1][1] + spaces + '|' + spaces + self.b[1][2])
-		print("\t" + " " + spaces + " " + spaces + '|' + spaces + " " + spaces + '|' + spaces + " " + spaces)
-		print("\t" + " " + dashes + "|" + dashes + "|" + dashes)
-		print("\t" + " " + spaces + " " + spaces + '|' + spaces + " " + spaces + '|' + spaces + " " + spaces)
-		print("\t" + "2" + spaces + self.b[2][0] + spaces + '|' + spaces + self.b[2][1] + spaces + '|' + spaces + self.b[2][2])
-		print("\t" + " " + spaces + " " + spaces + '|' + spaces + " " + spaces + '|' + spaces + " " + spaces)
+		# iterate through the board
+		for i in range(12):
+			try:
+				# playLists will max at 9 items
+				playLists = str(stats["plays"][i])
+			except Exception as e:
+				playLists = ""
+			print(boardList[i] + "\t" + playLists)
 		print("\n\n")
 
 	def update(self, cor, piece):
-		cor = re.sub("\s", "", cor)
 		cor = re.split(",", cor)
 		try:
 			row = int(cor[0])
 			col = int(cor[1])
 		except Exception as e:
+			# invalid entry
 			return False
+		# check if valid
 		if self.valid(row, col):
 			self.b[row][col] = piece
 			return True
@@ -58,6 +74,7 @@ class tttBoard:
 			return False
 
 	def valid(self, row, col):
+		# check if within range and empty space
 		if row not in range(3):
 			return 0
 		if col not in range(3):
@@ -80,6 +97,7 @@ class tttBoard:
 		if (self.b[0][2] == piece and self.b[1][1] == piece and self.b[2][0] == piece):
 			return piece
 		
+		# checks for open space
 		for r in range(3):
 			for c in range(3):
 				if self.valid(r, c):
@@ -87,22 +105,25 @@ class tttBoard:
 		return "tie"
 
 class tttGame:
-	def __init__(self, dbConnection, dbCursor, dialogs=1):
+	def __init__(self, dbConnection, dbCursor, sessionName="", dialogs=1, auto=0):
 		self.dialogs = dialogs
 		self.dbConnection = dbConnection
 		self.dbCursor = dbCursor
+		self.sessionName = sessionName
 		self.board = tttBoard()
 		
-		self.turn = 0
-		self.player = "P0"
-		self.piece = "X"
+		# start on a random turn
+		self.turn = random.randint(0, 1)
+		self.setPiece()
 		self.gameover = False
 		
 		self.stats = {"turns":0,"plays":[]}
 		
-		self.numPlayers = self.setPlayers()
+		self.numPlayers = self.setPlayers(auto)
 	
-	def setPlayers(self):
+	def setPlayers(self, auto):
+		if auto:
+			return 1
 		if self.dialogs:
 			numPlayers = -1
 			while numPlayers == -1:
@@ -137,12 +158,15 @@ class tttGame:
 	
 	def play(self):
 		while not self.gameover:
-			self.board.draw()
+			self.board.draw(self.stats)
 			self.setPiece()
 			
 			isValid = 0
 			while not isValid:
 				selectedCor = self.requestInput()
+				# split the coordinate into row,col
+				selectedCor = re.sub("\s", "", selectedCor)
+				selectedCor = re.sub("\.", ",", selectedCor).strip().strip(",").strip()
 				isValid = self.board.update(selectedCor, self.piece)
 				if not isValid:
 					if self.dialogs:
@@ -156,7 +180,8 @@ class tttGame:
 			
 			winStatus = self.board.checkWin(self.piece)
 			
-			self.board.draw()
+			if winStatus:
+				self.board.draw(self.stats)
 			
 			if winStatus == self.piece:
 				self.gameover = True
@@ -188,14 +213,15 @@ class tttGame:
 		
 		exitData = {
 			"time": str(datetime.datetime.now()),
+			"sessionName": self.sessionName,
 			"turns": self.stats["turns"],
 			"numPlayers": self.numPlayers,
 			"winStatus": winStatusValue,
 			"plays": str(self.stats["plays"])
 		}
 		self.dbCursor.execute("""
-		INSERT INTO games(time, turns, numPlayers, plays, winStatus)
-		VALUES (:time, :turns, :numPlayers, :plays, :winStatus)
+		INSERT INTO games(time, sessionName, turns, numPlayers, plays, winStatus)
+		VALUES (:time, :sessionName, :turns, :numPlayers, :plays, :winStatus)
 		""", exitData)
 		
 		self.dbConnection.commit()
