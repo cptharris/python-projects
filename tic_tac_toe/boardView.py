@@ -33,13 +33,16 @@ elif method2 == "":
 	
 	result = dbcur.fetchone()
 	
+	print(result)
+	
 	try:
 		str(result[0])
 	except Exception as e:
 		sys.exit()
 	
-	printData = [result[0], result[1], int(result[2]), int(result[3]), int(result[4])]
-	enteredBoard = ast.literal_eval(result[5])
+	# 0: id, 1: time, 2: sessionName, 3: turns, 4: numPlayers, 5: winStatus, 6: plays
+	printData = [result[0], result[1], result[2], int(result[3]), int(result[4]), int(result[5])]
+	enteredBoard = ast.literal_eval(result[6])
 	
 	dbcon.close()
 
@@ -48,16 +51,18 @@ for i in range(len(enteredBoard)):
 	board.update(enteredBoard[i][1], enteredBoard[i][0])
 	board.draw(stats)
 	print(
+	"\n\tSession Name: " +
+	str(printData[2]) +
 	"\n\tGameID: " +
 	str(printData[0]).rjust(5) +
 	"\t" + "Time: " +
 	str(printData[1]).rjust(27) + "\n" +
 	"\t" + "Players:" +
-	str(printData[3]).rjust(5) +
+	str(printData[4]).rjust(5) +
 	"\t" + "Win Status: " +
-	str(printData[4]).rjust(2) +
+	str(printData[5]).rjust(2) +
 	"\t  " + "Turns: " +
-	str(printData[2]).rjust(1)
+	str(printData[3]).rjust(1)
 	)
 	input()
 
