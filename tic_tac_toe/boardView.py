@@ -7,49 +7,20 @@ import numpy as np
 import ast
 import sqlite3
 import sys
+import os
+
 import ttt
 
 blankFill = "-"
 
-board = ttt.tttBoard()
-
-stats = {"plays":[]}
-
-method2 = str(input("Enter a reference ID () or enter data directly (1)?\n\t> "))
-
-if method2 == "1":
-	enteredBoard = ast.literal_eval(input(f"Enter a database list\n\t> "))
-elif method2 == "":
-	try:
-		dbID = int(input("Enter a reference ID.\n\t> "))
-	except Exception as e:
-		sys.exit()
-	
-	dbcon = sqlite3.connect('games.db')
-	dbcur = dbcon.cursor()
-	dbcur.execute("""
-	SELECT * FROM games WHERE id == :id
-	""", {"id": dbID})
-	
-	result = dbcur.fetchone()
-	
-	print(result)
-	
-	try:
-		str(result[0])
-	except Exception as e:
-		sys.exit()
-	
-	# 0: id, 1: time, 2: sessionName, 3: turns, 4: numPlayers, 5: winStatus, 6: plays
-	printData = [result[0], result[1], result[2], int(result[3]), int(result[4]), int(result[5])]
-	enteredBoard = ast.literal_eval(result[6])
-	
-	dbcon.close()
-
-for i in range(len(enteredBoard)):
-	stats["plays"].append([enteredBoard[i][1], enteredBoard[i][0]])
-	board.update(enteredBoard[i][1], enteredBoard[i][0])
-	board.draw(stats)
+def drawEnteredBoard():
+	for i in range(len(enteredBoard)):
+		stats["plays"].append([enteredBoard[i][1], enteredBoard[i][0]])
+		board.update(enteredBoard[i][1], enteredBoard[i][0])
+		board.draw(stats)
+		sessionInfo()
+		input()
+def sessionInfo():
 	print(
 	"\n\tSession Name: " +
 	str(printData[2]) +
@@ -64,9 +35,84 @@ for i in range(len(enteredBoard)):
 	"\t  " + "Turns: " +
 	str(printData[3]).rjust(1)
 	)
-	input()
 
-input("\tFinished\n")
+board = ttt.tttBoard()
+
+stats = {"plays":[]}
+
+method = str(input("Enter a reference ID () or enter data directly (1) or view a series of games (2)?\n\t> "))
+
+if method == "1":
+	enteredBoard = ast.literal_eval(input(f"Enter a database list\n\t> "))
+	drawEnteredBoard()
+elif method == "":
+	try:
+		dbID = int(input("Enter a reference ID.\n\t> "))
+	except Exception as e:
+		sys.exit()
+	
+	dbcon = sqlite3.connect('games.db')
+	dbcur = dbcon.cursor()
+	dbcur.execute("""
+	SELECT * FROM games WHERE id == :id
+	""", {"id": dbID})
+	
+	result = dbcur.fetchone()
+	
+	dbcon.close()
+	
+	try:
+		str(result[0])
+	except Exception as e:
+		sys.exit()
+	
+	# 0: id, 1: time, 2: sessionName, 3: turns, 4: numPlayers, 5: winStatus, 6: plays
+	printData = [result[0], result[1], result[2], int(result[3]), int(result[4]), int(result[5])]
+	enteredBoard = ast.literal_eval(result[6])
+	
+	
+	drawEnteredBoard()
+elif method == "2":
+	query = "SELECT * FROM games " + input("Enter a valid SQL statement.\n\t> ")
+	
+	dbcon = sqlite3.connect('games.db')
+	dbcur = dbcon.cursor()
+	dbcur.execute(query)
+	sessions = dbcur.fetchall()
+	dbcon.close()
+	
+	try:
+		str(sessions[0])
+	except Exception as e:
+		sys.exit()
+	
+	os.system("cls")
+	print("\n\n")
+	
+	for x in range(len(sessions)):
+		result = sessions[x]
+		stats = {"plays":[]}
+		
+		# 0: id, 1: time, 2: sessionName, 3: turns, 4: numPlayers, 5: winStatus, 6: plays
+		printData = [result[0], result[1], result[2], int(result[3]), int(result[4]), int(result[5])]
+		enteredBoard = ast.literal_eval(result[6])
+		
+		for i in range(len(enteredBoard)):
+			stats["plays"].append([enteredBoard[i][1], enteredBoard[i][0]])
+			board.update(enteredBoard[i][1], enteredBoard[i][0])
+		boardList = board.boardConst(stats)
+		for line in boardList:
+			print(line)
+		sessionInfo()
+		if x%10 == 0 and x != 0:
+			input()
+
+print("\n\n")
+isFinished = ""
+while isFinished != "exit":
+	isFinished = input("\tDone\t")
+
+print("\n\n\n")
 
 '''
 enteredBoard = input(f"Enter values\n\t> ").replace("[", "").replace("]", "").replace(" ", "").replace("\"", "").split(",")

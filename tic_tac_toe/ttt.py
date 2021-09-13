@@ -28,6 +28,15 @@ class tttBoard:
 
 	def draw(self, stats):
 		os.system("cls")
+		
+		boardList = self.boardConst(stats)
+		
+		print("\n\n")
+		for i in boardList:
+			print(i)
+		print("\n\n")
+
+	def boardConst(self, stats):
 		spaces = "   "
 		dashes = "-" + spaces.replace(" ", "--")
 		
@@ -47,16 +56,16 @@ class tttBoard:
 		"\t" + " " + spaces + " " + spaces + '|' + spaces + " " + spaces + '|' + spaces + " " + spaces
 		]
 		
-		print("\n\n")
 		# iterate through the board
-		for i in range(12):
+		for i in range(len(boardList)):
 			try:
 				# playLists will max at 9 items
 				playLists = str(stats["plays"][i])
 			except Exception as e:
 				playLists = ""
-			print(boardList[i] + "\t" + playLists)
-		print("\n\n")
+			boardList[i] += "\t" + playLists
+		
+		return boardList
 
 	def update(self, cor, piece):
 		cor = re.split(",", cor)
