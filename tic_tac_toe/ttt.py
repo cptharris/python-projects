@@ -91,6 +91,7 @@ class tttBoard:
 		return self.b[row][col] == blankFill
 	
 	def checkWin(self, piece):
+		otherPiece = 'X' if piece == 'O' else 'O'
 		#CHECK HORIZONTAL
 		for r in range(3):
 			if (self.b[r][0] == piece and self.b[r][1] == piece and self.b[r][2] == piece):
@@ -105,6 +106,21 @@ class tttBoard:
 		#CHECK OTHER DIAGONAL
 		if (self.b[0][2] == piece and self.b[1][1] == piece and self.b[2][0] == piece):
 			return piece
+		
+		#CHECK HORIZONTAL
+		for r in range(3):
+			if (self.b[r][0] == otherPiece and self.b[r][1] == otherPiece and self.b[r][2] == otherPiece):
+				return otherPiece
+		#CHECK VERTICAL
+		for c in range(3):
+			if (self.b[0][c] == otherPiece and self.b[1][c] == otherPiece and self.b[2][c] == otherPiece):
+				return otherPiece
+		#CHECK MAIN DIAGONAL
+		if (self.b[0][0] == otherPiece and self.b[1][1] == otherPiece and self.b[2][2] == otherPiece):
+			return otherPiece
+		#CHECK OTHER DIAGONAL
+		if (self.b[0][2] == otherPiece and self.b[1][1] == otherPiece and self.b[2][0] == otherPiece):
+			return otherPiece
 		
 		# checks for open space
 		for r in range(3):
@@ -190,15 +206,15 @@ class tttGame:
 			winStatus = self.board.checkWin(self.piece)
 			
 			if winStatus:
+				self.gameover = True
 				self.board.draw(self.stats)
 			
-			if winStatus == self.piece:
-				self.gameover = True
-				if self.dialogs:
+			if self.dialogs:
+				if winStatus == self.piece:
 					print(f"\t{self.player} wins!")
-			elif winStatus == "tie":
-				self.gameover = True
-				if self.dialogs:
+				elif winStatus == ('X' if self.turn == 0 else 'O'):
+					print(f"\t{'X' if self.turn == 0 else 'O'} wins!")
+				elif winStatus == "tie":
 					print("\t> A strange game. The only winning move is not to play.")
 			
 			if winStatus:
